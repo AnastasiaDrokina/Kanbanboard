@@ -2,8 +2,8 @@ const form = document.querySelector(".add-task__form");
 const taskboardList = document.querySelector(".taskboard__list");
 const taskEditBtns = document.querySelectorAll(".task__edit");
 const taskInputs = document.querySelectorAll(".task__input");
-const tasksLists = document.querySelectorAll(".taskboard__list");
-const taskItems = document.querySelectorAll(".taskboard__item");
+const tasksListsElement = document.querySelectorAll(".taskboard__list");
+const taskElements = document.querySelectorAll(".taskboard__item");
 const btnClear = document.querySelector(".taskboard__button");
 const trashList = document.querySelector(".taskboard__list--trash");
 const emptyTrash = document.querySelector(".task--empty-trash");
@@ -81,35 +81,64 @@ taskInputs.forEach((input) => {
 });
 
 // Drag & Drop
+// Добавляем всем атрибут
+for (const task of taskElements) {
+  task.draggable = true;
+}
 
-// taskItems.forEach((item) => {
-//   item.draggable = true;
-//   item.addEventListener("dragstart", () => {
-//     item.classList.add("task--dragged");
-//   });
+const getNextElement = (cursorPosition, currentElement) => {
+  const currentElementCoord = currentElement.getBoundingClientRect();
+  const currentElementCenter =
+    currentElementCoord.y + currentElementCoord.height / 2;
 
-//   item.addEventListener("dragend", () => {
-//     item.classList.remove("task--dragged");
-//   });
-// });
+  const nextElement =
+    cursorPosition < currentElementCenter
+      ? currentElement
+      : currentElement.nextElementSibling;
 
-// tasksLists.forEach((list) => {
-//   list.addEventListener("dragover", (evt) => {
-//     evt.preventDefault;
-//     const afterElement = getDragAfterElement(list, evt.clientY);
-//     const activeElement = document.querySelector(".task--dragged");
-//     list.appendChild(activeElement);
-//   });
-// });
+  return nextElement;
+};
 
-// function getDragAfterElement(list, y) {
-//   const draggableElements = [
-//     ...list.querySelectorAll("draggable:not(.task--dragged)"),
-//   ];
-//   draggableElements.reduce((closest, child) => {
-//     const box
-//   }, { offset: Number.POSITIVE_INFINITY);
-// }
+//
+tasksListsElement.forEach((list) => {
+  list.addEventListener("dragstart", (evt) => {
+    evt.target.classList.add("task--dragged");
+  });
+
+  list.addEventListener("dragend", (evt) => {
+    evt.target.classList.remove("task--dragged");
+  });
+
+  // Отслеживаем местоположение перемещаемого элемента относительно других
+  list.addEventListener("dragover", (evt) => {
+    evt.preventDefault();
+
+    // Находим выбранный элемент и тот элемент, на котором сработало событие dragover.
+    const activeElement = list.querySelector(".task--dragged");
+    const currentElement = evt.target;
+
+    const isMoveable =
+      activeElement !== currentElement &&
+      currentElement.classList.contains("taskboard__item");
+
+    if (!isMoveable) {
+      return;
+    }
+
+    // Находим элемент, перед которым нужно осуществить вставку
+    const nextElement = getNextElement(evt.clientY, currentElement);
+
+    // Вставляем элемент на новое место
+    if (
+      (nextElement && activeElement === nextElement.previousElementSibling) ||
+      activeElement === nextElement
+    ) {
+      return;
+    }
+
+    list.insertBefore(activeElement, nextElement);
+  });
+});
 
 function handleEmptyTrashBtn() {
   const trashItems = trashList.querySelectorAll(".taskboard__item");
